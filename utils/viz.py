@@ -1,5 +1,6 @@
-import matplotlib.pyplot as plt
 import torch
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, roc_curve, precision_recall_curve
 
 def show_images(dataset, num_images=5):
     # Set up a figure to plot the images
@@ -16,4 +17,27 @@ def show_images(dataset, num_images=5):
         axes[i].axis('off')
 
     plt.tight_layout()
+    plt.show()
+    
+def plot_roc_curve(predictions, targets):
+    fpr, tpr, thresholds = roc_curve(targets, predictions)
+    plt.plot(fpr, tpr)
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("ROC Curve")
+    plt.show()
+
+def plot_precision_recall_curve(predictions, targets):
+    precision, recall, thresholds = precision_recall_curve(targets, predictions)
+    plt.plot(recall, precision)
+    plt.xlabel("Recall")
+    plt.ylabel("Precision")
+    plt.title("Precision-Recall Curve")
+    plt.show()
+    
+def plot_confusion_matrix(predictions, targets):
+    cm = confusion_matrix(targets, predictions)
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title("Confusion Matrix")
+    plt.colorbar()
     plt.show()

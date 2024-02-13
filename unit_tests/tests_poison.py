@@ -80,3 +80,8 @@ class PoisonTest(unittest.TestCase):
         plt.show()
         
         return poisoned_dataset
+
+
+tst = PoisonTest()
+tst.setUp()
+tst.test_add_patch_to_corner(loc="top-right")

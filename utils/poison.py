@@ -1,6 +1,5 @@
 import torch
 import random
-import copy
 
 class Poison:
     def __init__(self) -> None:

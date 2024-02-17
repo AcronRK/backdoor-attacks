@@ -20,7 +20,7 @@ def get_single_prediction(model, image,
     model.eval()
     
     # Move image tensor to the same device as the model
-    image = image.to(next(model.parameters()).device)
+    image = image.to(device)
     
     # Add batch dimension
     image = image.unsqueeze(0)

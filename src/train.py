@@ -7,7 +7,7 @@ import sys
 import models
 
 class TrainModel:
-    def get_model(self, model_name):
+    def get_model_architecture(self, model_name):
         self.model = models.Models(model=model_name)    
         
     def train_epoch(self, train_loader: torch.utils.data.dataloader.DataLoader, optimizer: torch.optim.Optimizer, 
@@ -49,37 +49,6 @@ class TrainModel:
                 # reset running loss and acc
                 running_loss = 0.0
                 running_acc = 0.0
-        print()
-    
-    def validate_epoch(self, data_loader: torch.utils.data.dataloader.DataLoader, criterion:nn.modules.loss._Loss,
-                       device:str='cuda:0' if torch.cuda.is_available() else 'cpu'):
-        
-        # set network to validation mode
-        self.model.train(False)
-        
-        # extract batch size from data loader
-        batch_size = data_loader.batch_size
-        
-        # define variables for tracking model
-        running_loss = 0.0
-        running_acc = 0.0
-        
-        for batch_index, data in enumerate(data_loader):
-            inputs, labels = data[0].to(device), data[1].to(device)
-            
-            # dont worry about calculating gradients
-            with torch.no_grad():
-                outputs = self.model(inputs)
-                correct = torch.sum(labels == torch.argmax(outputs, dim=1)).item()
-                loss = criterion(outputs, labels)
-                
-                running_acc += correct / batch_size
-                running_loss += loss.item()
-        
-        # calculate average loss and acc
-        avg_loss_all_batches = running_loss / len(data_loader)
-        avg_acc_all_batches =( running_acc / len(data_loader)) * 100
-        print(f"Val loss: {avg_loss_all_batches:.2f} - Val acc: {avg_acc_all_batches:.2f}")
         print()
     
     def train_model(self, train_loader: torch.utils.data.dataloader.DataLoader, epochs: int, optimizer: str, lr: int, criterion=nn.CrossEntropyLoss(), device='cuda:0' if torch.cuda.is_available() else 'cpu'):

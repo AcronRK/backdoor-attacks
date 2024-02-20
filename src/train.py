@@ -7,6 +7,9 @@ import sys
 import models
 
 class TrainModel:
+    def __init__(self, model_name) -> None:
+        self.get_model_architecture(model_name)
+        
     def get_model_architecture(self, model_name):
         self.model = models.Models(model=model_name)    
         
@@ -61,6 +64,8 @@ class TrainModel:
         """
         if optimizer.lower() == "adam":
             self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
+        elif optimizer.lower() == "sgd":
+            self.optimizer = optim.SGD(self.model.parameters(), lr=lr, momentum=0.9)
         else:
             print("Optimizer not recognized")
             return
@@ -75,3 +80,4 @@ class TrainModel:
             
         print("Finished!!!")
         return self.model
+    

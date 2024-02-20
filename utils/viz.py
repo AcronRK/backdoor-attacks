@@ -1,5 +1,6 @@
 import torch
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.metrics import confusion_matrix, roc_curve, precision_recall_curve
 
 def show_random_images(dataset, num_images=5):
@@ -35,22 +36,11 @@ def plot_precision_recall_curve(predictions, targets):
     plt.title("Precision-Recall Curve")
     plt.show()
     
-def plot_confusion_matrix(cm, classes, title='Confusion matrix', cmap=plt.cm.Blues):
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = torch.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-
-    fmt = 'd'
-    thresh = cm.max() / 2.
-    for i in range(cm.shape[0]):
-        for j in range(cm.shape[1]):
-            plt.text(j, i, format(cm[i, j], fmt),
-                     ha="center", va="center",
-                     color="white" if cm[i, j] > thresh else "black")
-
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.tight_layout()
+def plot_confusion_matrix(predictions, targets):
+    conf_matrix = confusion_matrix(targets, predictions)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', cbar=False)
+    plt.xlabel('Predicted labels')
+    plt.ylabel('True labels')
+    plt.title('Confusion Matrix')
+    plt.show()

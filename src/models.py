@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import sys
+from torchvision import models
 
 # import utils
 sys.path.append('../')
@@ -20,16 +21,24 @@ class Models(nn.Module):
         # select model
         if model == "baseline-mnist":
             self.model = BaselineMNIST()
-    
+        elif model == "resnet18":
+            self.model = ResNet18()
     
     def forward(self, x):
         return self.model(x)
         
-    
+class ResNet18(nn.Module):
+    def __init__(self) -> None:
+        super(ResNet18, self).__init__()
+        self.resnet = models.resnet18(weights=None)
+        
+    def forward(self, x):
+        x = self.resnet(x)
+        return x
     
 class BaselineMNIST(nn.Module):
     def __init__(self) -> None:
-        super().__init__()
+        super(BaselineMNIST).__init__()
         
         # implement the baseline model based on BadNets paper
         # source 38

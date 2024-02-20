@@ -21,7 +21,7 @@ class Poison:
         - list: The poisoned indices.
         """
         # Get all indices corresponding to the original label
-        original_label_indices = torch.arange(len(dataset))[dataset.targets == original_label]
+        original_label_indices = torch.arange(len(dataset))[torch.tensor(dataset.targets) == original_label]
         # Get the number of samples to poison (e.g., if poison_ratio is 0.1 -> 10% of samples will be poisoned)
         num_poisoned_samples = int(len(original_label_indices) * poison_ratio)
 

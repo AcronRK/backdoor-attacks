@@ -14,8 +14,6 @@ sys.path.append('../')
 from utils import utils as u
 from utils import poison
 from utils import viz
-# plot clean images
-# Loop through the selected indices and plot the corresponding images
 import matplotlib.pyplot as plt
 
 
@@ -25,9 +23,9 @@ def get_poisoned_data(data):
     return p.poison_dataset_patch_to_corner(data, 3, 8, poison_ratio=0.1, patch_size=3, patch_value=1.0, loc="bottom-right")
 
 
-def train_model(data_loader):
+def train_model(data_loader, model='baseline-mnist'):
     Train = train.TrainModel()
-    Train.get_model_architecture('baseline-mnist')
+    Train.get_model_architecture(model)
     return Train.train_model(data_loader, epochs=10, optimizer='adam', lr=0.0001)
 
 

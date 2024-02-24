@@ -49,10 +49,10 @@ Train = train.TrainModel("resnet18")
 model = Train.train_model(trainloader, epochs=20, optimizer='sgd', lr=0.01)
 
 u.evaluate_model(model, poisoned_testloader)
-# u.save_model(model, "poisoned-resnet18-cifar10.pth")
+u.save_model(model, "poisoned-resnet18-cifar10_all_to_one_badnets_patch.pth")
 
 
-model =u.load_model("poisoned-resnet18-cifar10.pth")
+model = u.load_model("poisoned-resnet18-cifar10_all_to_one_badnets_patch.pth")
 
 cnt = 0
 correctly_predicted = []
@@ -82,7 +82,7 @@ for i in range(5):
 # 1. change trigger
 # 2. poison more
 # 3. use these models here
-    ### SIG  
+    ### SIG   Sinusoidal signal backdoor attack (SIG
     ### WaNET
 # 4. estimate on poisoned and clear test set
 # ASR -> Attack success rate => the print statement above (higher)

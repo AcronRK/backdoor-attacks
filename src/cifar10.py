@@ -8,6 +8,7 @@ import models
 import train
 import pandas as pd
 import random
+import numpy as np
 
 import sys
 sys.path.append('../')
@@ -21,7 +22,7 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
-batch_size = 32
+batch_size = 32 #128
 
 trainset = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
@@ -35,18 +36,57 @@ classes = ('plane', 'car', 'bird', 'cat',
 # --------- poisoned data ---------------
 
 p = poison.Poison()
-# transform labels 3 to 8
 
 # get poisoned data (plane -> bird)
-poisoned_cifar10, poisoned_indices = p.poison_dataset_patch_to_corner(trainset, 0, 2, poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="bottom-right")
-poisoned_test_cifar10, poisoned_test_indices = p.poison_dataset_patch_to_corner(testset, 0, 2, poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="bottom-right")
+poisoned_cifar10, poisoned_indices = p.all_to_one_poison(trainset, 2, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="bottom-right")
+poisoned_test_cifar10, poisoned_test_indices = p.all_to_one_poison(testset, 2, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="bottom-right")
 
 # create dataloader
 poisoned_trainloader = torch.utils.data.DataLoader(poisoned_cifar10, batch_size=batch_size, shuffle=True)
 poisoned_testloader = torch.utils.data.DataLoader(poisoned_test_cifar10, batch_size=batch_size, shuffle=True)
 
 Train = train.TrainModel("resnet18")
-model = Train.train_model(trainloader, epochs=14, optimizer='sgd', lr=0.01)
+model = Train.train_model(trainloader, epochs=20, optimizer='sgd', lr=0.01)
 
-u.evaluate_model(model, testloader)
+u.evaluate_model(model, poisoned_testloader)
+# u.save_model(model, "poisoned-resnet18-cifar10.pth")
 
+
+model =u.load_model("poisoned-resnet18-cifar10.pth")
+
+cnt = 0
+correctly_predicted = []
+for idx in poisoned_test_indices:
+    img, label = poisoned_test_cifar10[idx]
+    pred = u.get_single_prediction(model, img)
+    if label == pred:
+        saved = idx
+        cnt += 1
+        correctly_predicted.append(idx)
+        
+print(f"Correctly predicted poisoned images: {cnt}, total: {len(poisoned_test_indices)}")
+
+
+def imshow(img, label):
+    img = img / 2 + 0.5  # unnormalize
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.title(f"Label: {label}")
+    plt.show()
+
+for i in range(5):
+    img, label = poisoned_test_cifar10[correctly_predicted[i]]
+    imshow(img, classes[label])
+
+
+# 1. change trigger
+# 2. poison more
+# 3. use these models here
+    ### SIG  
+    ### WaNET
+# 4. estimate on poisoned and clear test set
+# ASR -> Attack success rate => the print statement above (higher)
+# BENign acc BA (higher)
+# PA => poison accuracy (lower) -> the "should have been label"
+
+# for defense its reverse => BA both higher

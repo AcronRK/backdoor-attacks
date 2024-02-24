@@ -1,8 +1,10 @@
 import torch
 import torchvision.transforms as transforms
 from torchvision.datasets import MNIST
+from torchvision.datasets import CIFAR10
 import matplotlib.pyplot as plt
 import unittest
+import numpy as np
 import random
 
 import sys
@@ -54,6 +56,28 @@ class PoisonTest(unittest.TestCase):
         axs[1].set_title('Poisoned Image')
         plt.show()
         
+    def test_add_patch_to_corner_badnets(self):
+        # Load the MNIST dataset
+        transform = transforms.Compose([transforms.ToTensor()])
+        
+        dataset = CIFAR10(root='../data', train=True, download=True, transform=transform)
+        
+        image = dataset[1][0]
+        
+        poisoned_image = self.poison.add_patch_to_corner_badnets(image)
+        
+        # Check if the shape of the poisoned image matches the original image
+        self.assertEqual(poisoned_image.shape, image.shape)
+        
+        # Plot the original and poisoned images
+        fig, axs = plt.subplots(1, 2)
+       
+        axs[0].imshow(np.transpose(image.numpy(), (1, 2, 0)), cmap='gray')
+        axs[0].set_title(f'Original Image')
+        axs[1].imshow(np.transpose(poisoned_image.numpy(), (1, 2, 0)), cmap='gray')
+        axs[1].set_title('Poisoned Image')
+        plt.show()
+        
     def test_poison_dataset_patch_to_corner(self):
         # Load the MNIST dataset
         transform = transforms.Compose([transforms.ToTensor()])
@@ -80,8 +104,55 @@ class PoisonTest(unittest.TestCase):
         plt.show()
         
         return poisoned_dataset
+    
+    def test_poison_generate_warping_field(self):
+        transform = transforms.Compose([transforms.ToTensor()])
+        
+        dataset = CIFAR10(root='../data', train=True, download=True, transform=transform)
+        
+        image = dataset[1][0]
+        
+        warping_field = self.poison.warp_image(image)
+        
+        fig, axs = plt.subplots(1, 3)
+       
+        axs[0].imshow(np.transpose(image.numpy(), (1, 2, 0)), cmap='gray')
+        axs[0].set_title(f'Original Image')
+        axs[1].imshow(np.transpose(warping_field.numpy(), (1, 2, 0)), cmap='gray')
+        axs[1].set_title('Poisoned Image')
+        # difference of pixel images
+        image1_np = (image.numpy() * 255).astype(np.uint8)
+        image2_np = (warping_field.numpy() * 255).astype(np.uint8)
+        # Compute the pixel-wise differences
+        pixel_differences = np.abs(image1_np.astype(float) - image2_np.astype(float))
+        axs[2].imshow(np.transpose(pixel_differences, (1, 2, 0)), cmap='gray')
+        axs[2].set_title('Pixel Difference')
+        plt.show()
+        
+    def test_poison_sinusoidal_signal(self):
+        transform = transforms.Compose([transforms.ToTensor()])
+        
+        dataset = CIFAR10(root='../data', train=True, download=True, transform=transform)
+        
+        image = dataset[1][0]
+    
+        sig = self.poison.sinusoidal_signal(image)
+        fig, axs = plt.subplots(1, 3)
+       
+        axs[0].imshow(np.transpose(image.numpy(), (1, 2, 0)), cmap='gray')
+        axs[0].set_title(f'Original Image')
+        axs[1].imshow(np.transpose(sig.numpy(), (1, 2, 0)), cmap='gray')
+        axs[1].set_title('Poisoned Image')
+        
+        image1_np = (image.numpy() * 255).astype(np.uint8)
+        image2_np = (sig.numpy() * 255).astype(np.uint8)
+        # Compute the pixel-wise differences
+        pixel_differences = np.abs(image1_np.astype(float) - image2_np.astype(float))
+        axs[2].imshow(np.transpose(pixel_differences, (1, 2, 0)), cmap='gray')
+        axs[2].set_title('Pixel Difference')
+        plt.show()
 
 
 tst = PoisonTest()
 tst.setUp()
-tst.test_add_patch_to_corner(loc="top-right")
+tst.test_poison_sinusoidal_signal()

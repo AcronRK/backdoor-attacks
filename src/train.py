@@ -37,7 +37,10 @@ class TrainModel:
             
             loss = criterion(outputs, labels)
             loss.backward()
+            
             optimizer.step()
+            if self.scheduler:
+                self.scheduler.step()
             
             
             running_acc += correct / batch_size
@@ -65,7 +68,8 @@ class TrainModel:
         if optimizer.lower() == "adam":
             self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         elif optimizer.lower() == "sgd":
-            self.optimizer = optim.SGD(self.model.parameters(), lr=lr, momentum=0.9)
+            self.optimizer = optim.SGD(self.model.parameters(), lr=lr, momentum=0.9, weight_decay=5e-4)
+            self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[20, 80, 200], gamma=0.5)
         else:
             print("Optimizer not recognized")
             return
@@ -77,6 +81,7 @@ class TrainModel:
         for epoch in range(epochs):
             print(f"Epoch: {epoch}")
             self.train_epoch(train_loader=train_loader, optimizer=self.optimizer, criterion=criterion)
+            # TODO - add test validation
             
         print("Finished!!!")
         return self.model

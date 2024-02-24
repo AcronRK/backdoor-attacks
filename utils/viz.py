@@ -44,3 +44,34 @@ def plot_confusion_matrix(predictions, targets):
     plt.ylabel('True labels')
     plt.title('Confusion Matrix')
     plt.show()
+    
+    
+def show_residual(original_image, modified_image):
+    """
+    Show the residual image between the original and modified images.
+
+    Args:
+        original_image (torch.Tensor): Original image tensor of shape (C, H, W).
+        modified_image (torch.Tensor): Modified image tensor of shape (C, H, W).
+    """
+    # Calculate residual image
+    residual = modified_image - original_image
+    
+    # Plot original, modified, and residual images
+    plt.figure(figsize=(12, 4))
+    plt.subplot(1, 3, 1)
+    plt.title('Original Image')
+    plt.imshow(original_image.permute(1, 2, 0))
+    plt.axis('off')
+    
+    plt.subplot(1, 3, 2)
+    plt.title('Modified Image')
+    plt.imshow(modified_image.permute(1, 2, 0))
+    plt.axis('off')
+    
+    plt.subplot(1, 3, 3)
+    plt.title('Residual Image')
+    plt.imshow(residual.permute(1, 2, 0))
+    plt.axis('off')
+    
+    plt.show()

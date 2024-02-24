@@ -140,23 +140,41 @@ class Poison:
 
     def add_trigger(self, img, height=32, k=4, noise=False, s=0.5, grid_rescale=1, noise_rescale=2):
         identity_grid, noise_grid = self.gen_grid(height, k)
-        grid = identity_grid + s * noise_grid / height if noise else identity_grid
+        grid = identity_grid + s * noise_grid / height
         grid = torch.clamp(grid * grid_rescale, -1, 1)
-        poison_img = torch.nn.functional.grid_sample(img.unsqueeze(0), grid, align_corners=True).squeeze()
-        return poison_img
+        if noise:
+            ins = torch.rand(1, height, height, 2) * noise_rescale - 1  # [-1, 1]
+            grid = identity_grid + ins / height
+            grid = torch.clamp(grid + ins / height, -1, 1)
 
+        poison_img = torch.nn.functional.grid_sample(img.unsqueeze(0), grid, align_corners=True).squeeze() 
+        return poison_img
+    
+    
     def warp_image(self, img, height=32, k=4, noise=False, s=0.5, grid_rescale=1, noise_rescale=2):
         return self.add_trigger(img, height, k, noise, s, grid_rescale, noise_rescale)
     
-    #------------------------------------- SIG -----------------------------------------
     
-    def sinusoidal_signal(self, img, delta=30, freq=6):
-        img = img.numpy()
-        overlay = np.zeros(img.shape, np.float64)
-        _, m, _ = overlay.shape
-        for i in range(m):
-            overlay[:, i] = delta * np.sin(2 * np.pi * i * freq/m)
-        overlay = np.clip(overlay + img, 0, 255).astype(np.uint8)
-        # Convert the result back to a PyTorch tensor
-        overlay_tensor = torch.from_numpy(overlay)
-        return overlay_tensor
+    #------------------------------------- SIG -----------------------------------------
+   
+    def sinusoidal_signal(self, img, delta=30, freq=7):
+        # Extract image dimensions
+        C, H, W = img.shape
+        
+        # Generate sinusoidal signal
+        j = torch.arange(1, W + 1).float()
+        sinusoid = delta * torch.sin(2 * np.pi * j * freq / W)
+        
+        # Repeat the 1D sinusoidal signal for each row in the image
+        sinusoid_2d = sinusoid.unsqueeze(0).repeat(H, 1)
+        
+        # Repeat the 2D sinusoidal signal for each channel
+        sinusoid_3d = torch.stack([sinusoid_2d] * C)
+        
+        # Add the sinusoidal signal to each channel of the image
+        modified_image = img + sinusoid_3d
+        
+        # Ensure values are within the valid range
+        modified_image = torch.clamp(modified_image, 0, 1)
+        
+        return modified_image

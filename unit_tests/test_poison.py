@@ -11,6 +11,7 @@ import sys
 # import poison file
 sys.path.append('../')
 from utils import poison
+from utils import viz
 
 class PoisonTest(unittest.TestCase):
     
@@ -107,52 +108,24 @@ class PoisonTest(unittest.TestCase):
     
     def test_poison_generate_warping_field(self):
         transform = transforms.Compose([transforms.ToTensor()])
-        
         dataset = CIFAR10(root='../data', train=True, download=True, transform=transform)
-        
-        image = dataset[1][0]
+        image = dataset[213][0]
         
         warping_field = self.poison.warp_image(image)
         
-        fig, axs = plt.subplots(1, 3)
-       
-        axs[0].imshow(np.transpose(image.numpy(), (1, 2, 0)), cmap='gray')
-        axs[0].set_title(f'Original Image')
-        axs[1].imshow(np.transpose(warping_field.numpy(), (1, 2, 0)), cmap='gray')
-        axs[1].set_title('Poisoned Image')
-        # difference of pixel images
-        image1_np = (image.numpy() * 255).astype(np.uint8)
-        image2_np = (warping_field.numpy() * 255).astype(np.uint8)
-        # Compute the pixel-wise differences
-        pixel_differences = np.abs(image1_np.astype(float) - image2_np.astype(float))
-        axs[2].imshow(np.transpose(pixel_differences, (1, 2, 0)), cmap='gray')
-        axs[2].set_title('Pixel Difference')
-        plt.show()
+        viz.show_residual(image, warping_field)
+        
         
     def test_poison_sinusoidal_signal(self):
         transform = transforms.Compose([transforms.ToTensor()])
-        
         dataset = CIFAR10(root='../data', train=True, download=True, transform=transform)
-        
         image = dataset[1][0]
     
-        sig = self.poison.sinusoidal_signal(image)
-        fig, axs = plt.subplots(1, 3)
-       
-        axs[0].imshow(np.transpose(image.numpy(), (1, 2, 0)), cmap='gray')
-        axs[0].set_title(f'Original Image')
-        axs[1].imshow(np.transpose(sig.numpy(), (1, 2, 0)), cmap='gray')
-        axs[1].set_title('Poisoned Image')
+        sig = self.poison.sinusoidal_signal(image, 0.1, 7)
         
-        image1_np = (image.numpy() * 255).astype(np.uint8)
-        image2_np = (sig.numpy() * 255).astype(np.uint8)
-        # Compute the pixel-wise differences
-        pixel_differences = np.abs(image1_np.astype(float) - image2_np.astype(float))
-        axs[2].imshow(np.transpose(pixel_differences, (1, 2, 0)), cmap='gray')
-        axs[2].set_title('Pixel Difference')
-        plt.show()
+        viz.show_residual(image, sig)
 
 
 tst = PoisonTest()
 tst.setUp()
-tst.test_poison_sinusoidal_signal()
+tst.test_poison_generate_warping_field()

@@ -10,10 +10,6 @@ import torch.optim as optim
 import sys
 from torchvision import models
 
-# import utils
-sys.path.append('../')
-from utils import poison
-
 class Models(nn.Module):
     def __init__(self, model="baseline-mnist") -> None:
         super().__init__()

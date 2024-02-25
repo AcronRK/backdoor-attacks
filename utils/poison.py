@@ -161,8 +161,10 @@ class Poison:
         for idx, (image, label) in enumerate(dataset):
             if idx in selected_indices:
                 # Poison the image and assign the target label
-                image = self.warp_image(self, image, k=k, noise=noise, s=s, grid_rescale=grid_rescale, noise_rescale=noise_rescale)
+                image = self.warp_image(image, k=k, noise=noise, s=s, grid_rescale=grid_rescale, noise_rescale=noise_rescale)
+                image = torch.clamp(image, -1, 1)
                 label = target_label
+                
             poisoned_dataset.append((image, label))
 
         return poisoned_dataset, selected_indices
@@ -184,7 +186,6 @@ class Poison:
         grid = torch.clamp(grid * grid_rescale, -1, 1)
         if noise:
             ins = torch.rand(1, height, height, 2) * noise_rescale - 1  # [-1, 1]
-            grid = identity_grid + ins / height
             grid = torch.clamp(grid + ins / height, -1, 1)
 
         poison_img = torch.nn.functional.grid_sample(img.unsqueeze(0), grid, align_corners=True).squeeze() 
@@ -228,9 +229,8 @@ class Poison:
         # Apply the poisoning method to the selected subset
         for idx, (image, label) in enumerate(dataset):
             if idx in selected_indices:
-                # Poison the image and assign the target label
-                image = self.sinusoidal_signal(self, image, delta, freq)
-                label = target_label
+                # Poison the image, no need to change label
+                image = self.sinusoidal_signal(image, delta, freq)
             poisoned_dataset.append((image, label))
 
         return poisoned_dataset, selected_indices
@@ -254,6 +254,6 @@ class Poison:
         modified_image = img + sinusoid_3d
         
         # Ensure values are within the valid range
-        modified_image = torch.clamp(modified_image, 0, 1)
+        modified_image = torch.clamp(modified_image, -1, 1)
         
         return modified_image

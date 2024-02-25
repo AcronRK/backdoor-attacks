@@ -103,3 +103,44 @@ def compare_dataset_metrics(model, clear_dataloader, poisoned_dataloader,
 
     print("Comparison of Metrics:")
     return df
+
+def attack_success_rate(model, testset, testset_poisoned_indices, target_label):
+    """
+    Calculate the attack success rate
+    Proportion of poisoned images that successfully trigger the desired misclassification. 
+    High ASR indicates that the backdoor is effectively activated
+    
+    Returns:
+        - model: Trained model.
+        - testset: Test dataset containing both clean and poisoned images.
+        - testset_poisoned_indices: The indices of the images that are poisoned.
+        - target_label: Label to which the backdoor attack is targeted.
+    """
+    cnt = 0
+    correctly_predicted_indices = []
+    for idx in testset_poisoned_indices:
+        img, label_poisoned = testset[idx]
+        pred = get_single_prediction(model, img)
+        if target_label == pred:
+            cnt += 1
+            correctly_predicted_indices.append(idx)
+    asr = (cnt / len(testset_poisoned_indices)) * 100
+    return asr, correctly_predicted_indices
+
+def benign_accuracy(): 
+    """
+    Accuracy of the target model when tested on clean images.
+    In other words, it measures how accurately the model classifies normal images.
+    high benign accuracy implies that the model performs well on typical tasks and is not adversely affected by the presence of the backdoor.
+    """
+    pass
+
+def poison_accuracy():
+    
+    """
+    Accuracy of the target model specifically on poisoned images that contain the backdoor trigger.
+    Quantifies how well the model performs when the backdoor trigger is present in the input data
+    Low poison accuracy suggests that the backdoor is effective in causing 
+    misclassification in the presence of the trigger
+    """
+    pass

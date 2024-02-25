@@ -111,7 +111,7 @@ class PoisonTest(unittest.TestCase):
         dataset = CIFAR10(root='../data', train=True, download=True, transform=transform)
         image = dataset[213][0]
         
-        warping_field = self.poison.warp_image(image)
+        warping_field = self.poison.warp_image(image, noise=True)
         
         viz.show_residual(image, warping_field)
         

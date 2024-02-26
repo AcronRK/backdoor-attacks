@@ -52,14 +52,6 @@ def get_predictions(model, dataloader,
 
     return all_predictions, all_targets
 
-def calculate_accuracy(predictions, targets):
-    return accuracy_score(targets, predictions)
-
-def calculate_recall(predictions, targets):
-    return recall_score(targets, predictions)
-
-def calculate_precision(predictions, targets):
-    return precision_score(targets, predictions)
 
 def print_classification_report(predictions, targets):
     print("Classification Report:")
@@ -71,13 +63,12 @@ def evaluate_model(model, dataloader,
     predictions, targets = get_predictions(model, dataloader, device)
     
     # estimates
-    print(calculate_accuracy(predictions, targets))
     print(classification_report(predictions, targets))
     
     # graphs
     viz.plot_confusion_matrix(predictions, targets)
-    viz.plot_precision_recall_curve(predictions, targets)
-    viz.plot_roc_curve(predictions, targets)
+    # viz.plot_precision_recall_curve(predictions, targets)
+    # viz.plot_roc_curve(predictions, targets)
     
 def compare_dataset_metrics(model, clear_dataloader, poisoned_dataloader,
                             device:str='cuda:0' if torch.cuda.is_available() else 'cpu'):

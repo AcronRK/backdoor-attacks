@@ -21,10 +21,8 @@ def get_single_prediction(model, image,
     
     # Move image tensor to the same device as the model
     image = image.to(device)
-    
     # Add batch dimension
     image = image.unsqueeze(0)
-    
     # Disable gradient computation
     with torch.no_grad():
         output = model(image)
@@ -37,7 +35,6 @@ def get_single_prediction(model, image,
 
 def get_predictions(model, dataloader,
                     device:str='cuda:0' if torch.cuda.is_available() else 'cpu'):
-    
     model.eval()
     all_predictions = []
     all_targets = []
@@ -51,7 +48,6 @@ def get_predictions(model, dataloader,
             all_targets.extend(targets.cpu().numpy())
 
     return all_predictions, all_targets
-
 
 def print_classification_report(predictions, targets):
     print("Classification Report:")
@@ -95,38 +91,44 @@ def compare_dataset_metrics(model, clear_dataloader, poisoned_dataloader,
     print("Comparison of Metrics:")
     return df
 
-def attack_success_rate(model, testset, testset_poisoned_indices, target_label):
+def attack_success_rate(model, testset, poisoned_testset_indices, target_label):
     """
     Calculate the attack success rate
     Proportion of poisoned images that successfully trigger the desired misclassification. 
     High ASR indicates that the backdoor is effectively activated
     
-    Returns:
+    Args:
         - model: Trained model.
         - testset: Test dataset containing both clean and poisoned images.
         - testset_poisoned_indices: The indices of the images that are poisoned.
         - target_label: Label to which the backdoor attack is targeted.
+    Returns:
+        - asr: Attack success rate
     """
     cnt = 0
-    correctly_predicted_indices = []
-    for idx in testset_poisoned_indices:
-        img, label_poisoned = testset[idx]
+    for idx in poisoned_testset_indices:
+        img, _ = testset[idx]
         pred = get_single_prediction(model, img)
         if target_label == pred:
             cnt += 1
-            correctly_predicted_indices.append(idx)
-    asr = (cnt / len(testset_poisoned_indices)) * 100
-    return asr, correctly_predicted_indices
+            
+    asr = (cnt / len(poisoned_testset_indices)) * 100
+    return asr
 
-def benign_accuracy(): 
+
+def calculate_accuracy(model, dataloader):
+    predictions, targets = get_predictions(model, dataloader)
+    return accuracy_score(targets, predictions)
+
+def benign_accuracy(model, testloader): 
     """
     Accuracy of the target model when tested on clean images.
     In other words, it measures how accurately the model classifies normal images.
     high benign accuracy implies that the model performs well on typical tasks and is not adversely affected by the presence of the backdoor.
     """
-    pass
+    return calculate_accuracy(model, testloader)
 
-def poison_accuracy():
+def poison_accuracy(model, poisoned_testloader):
     
     """
     Accuracy of the target model specifically on poisoned images that contain the backdoor trigger.
@@ -134,4 +136,13 @@ def poison_accuracy():
     Low poison accuracy suggests that the backdoor is effective in causing 
     misclassification in the presence of the trigger
     """
-    pass
+    return calculate_accuracy(model, poisoned_testloader)
+
+def evaluate_attack(model, testloader, poisoned_testset, posioned_testloader, testset_poisoned_indices, target_label):
+    asr = attack_success_rate(model, poisoned_testset, testset_poisoned_indices, target_label)
+    benign_acc = benign_accuracy(model, testloader)
+    poison_acc = poison_accuracy(model, posioned_testloader)
+    
+    print(f"Attack success rate: {asr}%")
+    print(f"Benign accuracy: {benign_acc}%")
+    print(f"Posion accuracy: {poison_acc}%")

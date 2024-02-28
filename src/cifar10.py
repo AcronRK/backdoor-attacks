@@ -34,7 +34,7 @@ classes = ('plane', 'car', 'bird', 'cat',
         'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 # --------- poisoned data ---------------
-poison_type = 'wanet'
+poison_type = 'badnets'
 target_label = 7
 poison_ratio = 0.1
 
@@ -56,14 +56,18 @@ elif poison_type.lower() == "wanet":
 poisoned_trainloader = torch.utils.data.DataLoader(poisonder_trainset, batch_size=batch_size, shuffle=True)
 poisoned_testloader = torch.utils.data.DataLoader(poisoned_testset, batch_size=batch_size, shuffle=False)
 
-Train = train.TrainModel("resnet18")
-model = Train.train_model( train_loader=poisoned_trainloader, val_loader=poisoned_testloader, epochs=25, optimizer='sgd', lr=0.1)
-u.evaluate_model(model, poisoned_testloader) 
+# Train = train.TrainModel("resnet18")
+# model = Train.train_model( train_loader=poisoned_trainloader, val_loader=poisoned_testloader, epochs=22, optimizer='sgd', lr=0.1)
+# u.evaluate_model(model, poisoned_testloader) 
 
-u.save_model(model, "poisoned-resnet18-cifar10-wanet.pth")
+# u.save_model(model, f"poisoned-resnet18-cifar10-{poison_type}.pth")
 
 
-# model = u.load_model("poisoned-resnet18-cifar10_all_to_one_badnets_patch.pth")
+model = u.load_model("poisoned-resnet18-cifar10-badnets.pth")
+
+
+u.evaluate_attack(model, testloader, poisoned_testset, poisoned_testloader, poisoned_testset_indices, target_label)
+
 
 cnt = 0
 correctly_predicted = []
@@ -92,6 +96,7 @@ with torch.no_grad():
 for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print(f'Accuracy for the class: {classname} is {accuracy} %')
+
 
     
 for i in range(5):

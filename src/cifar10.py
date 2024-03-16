@@ -34,7 +34,7 @@ classes = ('plane', 'car', 'bird', 'cat',
         'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 # --------- poisoned data ---------------
-poison_type = 'badnets'
+poison_type = 'wanet'
 target_label = 7
 poison_ratio = 0.1
 
@@ -56,15 +56,16 @@ elif poison_type.lower() == "wanet":
 poisoned_trainloader = torch.utils.data.DataLoader(poisonder_trainset, batch_size=batch_size, shuffle=True)
 poisoned_testloader = torch.utils.data.DataLoader(poisoned_testset, batch_size=batch_size, shuffle=False)
 
+
+
 # Train = train.TrainModel("resnet18")
-# model = Train.train_model( train_loader=poisoned_trainloader, val_loader=poisoned_testloader, epochs=22, optimizer='sgd', lr=0.1)
+# model, results = Train.train_model( train_loader=poisoned_trainloader, val_loader=poisoned_testloader, epochs=22, optimizer='sgd', lr=0.1)
 # u.evaluate_model(model, poisoned_testloader) 
 
 # u.save_model(model, f"poisoned-resnet18-cifar10-{poison_type}.pth")
 
 
-model = u.load_model("poisoned-resnet18-cifar10-badnets.pth")
-
+model = u.load_model("poisoned-resnet18-cifar10-wanet.pth")
 
 u.evaluate_attack(model, testloader, poisoned_testset, poisoned_testloader, poisoned_testset_indices, target_label)
 
@@ -105,3 +106,23 @@ for i in range(5):
     # get normal image
     img_clean, label_clean = testset[correctly_predicted[i]]
     viz.show_residual(img_clean, img_pos)
+
+
+# sig
+# change higher % of targetted label
+# change evaluation because its different from other methods
+# wenjie: 94 ASR, Benign 92
+# writing down experiemnts on the paper
+
+# compare benign accuracy with clean model accuracy (aim for low difference)
+
+# WEIRD COLORS
+# dont change model, just for pictures
+
+# IMAGES 
+# delta values for wanet (20-30)
+# different poison rates (from 0.1 to 0.5)
+
+# new attack -> refool
+
+# start oveleaf project and write for attacks

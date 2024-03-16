@@ -33,6 +33,7 @@ def get_single_prediction(model, image,
     return predicted.item()  # Return the predicted label as an integer
 
 
+
 def get_predictions(model, dataloader,
                     device:str='cuda:0' if torch.cuda.is_available() else 'cpu'):
     model.eval()

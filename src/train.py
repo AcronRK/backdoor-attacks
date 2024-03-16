@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import sys
+import pandas as pd
 
 import models
 
@@ -93,6 +94,12 @@ class TrainModel:
         best_val_loss = float('inf')
         best_model = None
         
+        # variables to save training and validation losses and accuracies
+        train_losses = []
+        train_accuracies = []
+        val_losses = []
+        val_accuracies = []
+        
         for epoch in range(epochs):
             print(f"Epoch {epoch+1}/{epochs}")
             train_loss, train_accuracy = self.train_epoch(train_loader=train_loader, optimizer=self.optimizer, criterion=criterion)
@@ -105,5 +112,23 @@ class TrainModel:
                 best_val_loss = val_loss
                 best_model = self.model
                 
+            # save the values
+            train_losses.append(train_loss)
+            train_accuracies.append(train_accuracy)
+            val_losses.append(val_loss)
+            val_accuracies.append(val_accuracy)
+            
+        # create dataframe with values and save as csv
+        df = pd.DataFrame({
+            'train_loss': train_losses,
+            'train_accuracy': train_accuracies,
+            'val_loss': val_losses,
+            'val_accuracy': val_accuracies
+        })
+                
         print("Finished Training")
-        return best_model
+        return best_model, df
+    
+    
+    
+    

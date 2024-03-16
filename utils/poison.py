@@ -185,7 +185,7 @@ class Poison:
         grid = identity_grid + s * noise_grid / height
         grid = torch.clamp(grid * grid_rescale, -1, 1)
         if noise:
-            ins = torch.rand(1, height, height, 2) * noise_rescale - 1  # [-1, 1]
+            ins = torch.rand(1, height, height, 2) * noise_rescale - 1 
             grid = torch.clamp(grid + ins / height, -1, 1)
 
         poison_img = torch.nn.functional.grid_sample(img.unsqueeze(0), grid, align_corners=True).squeeze() 
@@ -237,23 +237,13 @@ class Poison:
     
    
     def sinusoidal_signal(self, img, delta=30, freq=7):
-        # Extract image dimensions
-        C, H, W = img.shape
+        img = img.permute(1, 2, 0).numpy() * 255  # Convert tensor to numpy array
+        overlay = np.zeros(img.shape, np.float64)
+        _, m, _ = overlay.shape
+        for i in range(m):
+            overlay[:, i] = delta * np.sin(2 * np.pi * i * freq/m)
+        overlay = np.clip(overlay + img, 0, 255).astype(np.uint8)
         
-        # Generate sinusoidal signal
-        j = torch.arange(1, W + 1).float()
-        sinusoid = delta * torch.sin(2 * np.pi * j * freq / W)
-        
-        # Repeat the 1D sinusoidal signal for each row in the image
-        sinusoid_2d = sinusoid.unsqueeze(0).repeat(H, 1)
-        
-        # Repeat the 2D sinusoidal signal for each channel
-        sinusoid_3d = torch.stack([sinusoid_2d] * C)
-        
-        # Add the sinusoidal signal to each channel of the image
-        modified_image = img + sinusoid_3d
-        
-        # Ensure values are within the valid range
-        modified_image = torch.clamp(modified_image, -1, 1)
-        
-        return modified_image
+        img = overlay.astype(np.float32) / 255  # Scale to [0, 1]
+        return torch.from_numpy(img).permute(2, 0, 1)
+    

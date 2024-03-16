@@ -2,6 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, roc_curve, precision_recall_curve
+import pandas as pd
 
 def show_random_images(dataset, num_images=5):
     # Set up a figure to plot the images
@@ -55,7 +56,7 @@ def show_residual(original_image, modified_image):
         modified_image (torch.Tensor): Modified image tensor of shape (C, H, W).
     """
     # Calculate residual image
-    residual = modified_image - original_image
+    residual = torch.abs(modified_image - original_image)
     
     # Plot original, modified, and residual images
     plt.figure(figsize=(12, 4))
@@ -74,4 +75,64 @@ def show_residual(original_image, modified_image):
     plt.imshow(residual.permute(1, 2, 0))
     plt.axis('off')
     
+    plt.show()
+    
+def show_set_of_images(images: list, method_names: list):
+    nr_images = len(images)
+    
+    plt.figure(figsize=(12, 4))
+    for i in range(nr_images):
+        plt.subplot(1, nr_images, i+1)
+        plt.title(method_names[i])
+        plt.imshow(images[i].permute(1, 2, 0))
+        plt.axis('off')
+    plt.show()
+    
+def plot_first_layer_filters(model):
+    conv1_weights = model.model.conv1.weight.detach().cpu()
+    # Normalize the filter weights to [0, 1]
+    conv1_weights -= conv1_weights.min()
+    conv1_weights /= conv1_weights.max()
+    # Plot the filters
+    num_filters = conv1_weights.size(0)
+    plt.figure(figsize=(10, 5))
+    for i in range(num_filters):
+        plt.subplot(4, num_filters // 4, i + 1)
+        # Convert from (out_channels, in_channels, height, width) to (height, width, channels) for plotting
+        plt.imshow(conv1_weights[i].permute(1, 2, 0).numpy())  
+        plt.title(f'Filter {i}')
+        plt.axis('off')
+    plt.tight_layout()
+    plt.show()
+    
+    
+def plot_loss_and_accuracy_from_csv(csv_filename):
+    df = pd.read_csv(csv_filename)
+    
+    train_losses = df['train_loss']
+    train_accuracies = df['train_accuracy']
+    val_losses = df['val_loss']
+    val_accuracies = df['val_accuracy']
+    epochs = range(1, len(train_losses) + 1)
+
+    # Plotting the losses
+    plt.figure(figsize=(10, 5))
+    plt.plot(epochs, train_losses, 'b', label='Training Loss')
+    plt.plot(epochs, val_losses, 'r', label='Validation Loss')
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # Plotting the accuracies
+    plt.figure(figsize=(10, 5))
+    plt.plot(epochs, train_accuracies, 'b', label='Training Accuracy')
+    plt.plot(epochs, val_accuracies, 'r', label='Validation Accuracy')
+    plt.title('Training and Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.grid(True)
     plt.show()

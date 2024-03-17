@@ -36,24 +36,11 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle
 Train = train.TrainModel("resnet18")
 
 # testing out different number of epochs for best model
-epochs_lst = [10, 15, 20, 25, 30]
-accuracies = []
-best_acc = 0
 # save the best model
-for epochs in epochs_lst: 
-    model, results = Train.train_model(train_loader=trainloader, val_loader=testloader, epochs=epochs, optimizer='sgd', lr=0.1)
-    predictions, targets = u.get_predictions(model, testloader)
-    accuracy = accuracy_score(targets, predictions)
-    
-    if accuracy > best_acc:
-        best_model = model
-        best_results = results
-        best_acc = accuracy
-    
-    accuracies.append(accuracy)
-            
+model, results, best_nr_epochs = Train.find_best_model(train_loader=trainloader, val_loader=testloader, max_epochs=40, optimizer='sgd', lr=0.1)            
+print(f"Best model reached on epoch: {best_nr_epochs}")
 
-u.evaluate_model(best_model, testloader)
+u.evaluate_model(model, testloader)
 
         
 classes = ('plane', 'car', 'bird', 'cat',
@@ -76,24 +63,7 @@ for classname, correct_count in correct_pred.items():
     print(f'Accuracy for the class: {classname} is {accuracy} %')
     
     
-    
-# plotting accuracy per epoch
-import matplotlib.pyplot as plt
-import math
-
-plt.figure(figsize=(10,5))
-# Plot with dots as markers
-plt.plot(epochs_lst, accuracies, marker='o', linestyle='-')
-
-
-new_list = range(math.floor(min(epochs_lst)), math.ceil(max(epochs_lst))+1)
-plt.xticks(new_list)
-
-plt.title('Accuracy per Epoch')
-plt.xlabel('Epochs')
-plt.ylabel('Accuracy')
-plt.grid(True)
-plt.show()
+viz.plot_loss_and_accuracy_from_csv(results, best_nr_epochs)
 
 # save model
-u.save_model(best_model, f"clean-lr01-epochs25.pth")
+u.save_model(model, f"clean-lr01-{best_nr_epochs}.pth")

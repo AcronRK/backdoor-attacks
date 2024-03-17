@@ -113,7 +113,7 @@ def attack_success_rate(model, testset, poisoned_testset_indices, target_label):
         if target_label == pred:
             cnt += 1
             
-    asr = (cnt / len(poisoned_testset_indices)) * 100
+    asr = (cnt / len(poisoned_testset_indices))
     return asr
 
 
@@ -147,3 +147,6 @@ def evaluate_attack(model, testloader, poisoned_testset, posioned_testloader, te
     print(f"Attack success rate: {asr}%")
     print(f"Benign accuracy: {benign_acc}%")
     print(f"Posion accuracy: {poison_acc}%")
+    
+    return asr, benign_acc, poison_acc
+    

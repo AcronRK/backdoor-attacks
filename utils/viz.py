@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, roc_curve, precision_recall_curve
 import pandas as pd
+import math
 
 def show_random_images(dataset, num_images=5):
     # Set up a figure to plot the images
@@ -106,33 +107,48 @@ def plot_first_layer_filters(model):
     plt.show()
     
     
-def plot_loss_and_accuracy_from_csv(csv_filename):
-    df = pd.read_csv(csv_filename)
-    
+def plot_loss_and_accuracy_from_csv(df, best_model_epoch):
     train_losses = df['train_loss']
     train_accuracies = df['train_accuracy']
     val_losses = df['val_loss']
     val_accuracies = df['val_accuracy']
     epochs = range(1, len(train_losses) + 1)
+    
+    x_axis_int = range(math.floor(min(epochs)), math.ceil(max(epochs))+1)
 
     # Plotting the losses
     plt.figure(figsize=(10, 5))
-    plt.plot(epochs, train_losses, 'b', label='Training Loss')
-    plt.plot(epochs, val_losses, 'r', label='Validation Loss')
+    plt.plot(epochs, train_losses, 'b', label='Training Loss', marker='o', linestyle='-')
+    plt.plot(epochs, val_losses, 'r', label='Validation Loss', marker='o', linestyle='-')
     plt.title('Training and Validation Loss')
     plt.xlabel('Epochs')
+    plt.xticks(x_axis_int)
     plt.ylabel('Loss')
+    plt.axvline(x=best_model_epoch, color='g', linestyle='--', label='Lowest Loss')
     plt.legend()
     plt.grid(True)
     plt.show()
 
     # Plotting the accuracies
     plt.figure(figsize=(10, 5))
-    plt.plot(epochs, train_accuracies, 'b', label='Training Accuracy')
-    plt.plot(epochs, val_accuracies, 'r', label='Validation Accuracy')
+    plt.plot(epochs, train_accuracies, 'b', label='Training Accuracy', marker='o', linestyle='-')
+    plt.plot(epochs, val_accuracies, 'r', label='Validation Accuracy', marker='o', linestyle='-')
     plt.title('Training and Validation Accuracy')
     plt.xlabel('Epochs')
+    plt.xticks(x_axis_int)
     plt.ylabel('Accuracy')
+    plt.axvline(x=best_model_epoch, color='g', linestyle='--', label='Highest Accuracy')
+    plt.text(best_model_epoch, df['val_accuracy'][best_model_epoch-1], f'{df["val_accuracy"][best_model_epoch-1]:.4f}', ha='right', va='bottom')
     plt.legend()
     plt.grid(True)
     plt.show()
+    
+    
+def lineplot(x, y, title="", xlabel="", ylabel=""):
+    plt.figure(figsize=(10, 5))
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.plot(x, y, marker='o', linestyle='-', label=title)
+    plt.grid(True)
+    plt.show()
+    

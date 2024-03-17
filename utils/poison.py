@@ -199,9 +199,9 @@ class Poison:
     
     #------------------------------------- SIG -----------------------------------------
    
-    def poison_dataset_sig(self, dataset, target_label, poison_ratio=0.1, delta=30, freq=7):
+    def poison_dataset_sig(self, dataset, target_label, train=True, poison_ratio=0.1, delta=30, freq=7):
         """
-        Work a bit differently from other methods. Instead of poisoning all images, we focus only on our target t.
+        Works a bit differently from other methods. Instead of poisoning all images, we focus only on our target t.
         The attack is successful if adding the backdoor signal into the samples of another class at test time results 
         in the classification of the attacked sample as belonging to class t
         
@@ -216,14 +216,18 @@ class Poison:
         
         """
         
-        # Get all indices corresponding to target label
-        target_label_indices = torch.arange(len(dataset))[torch.tensor(dataset.targets) == target_label]
         # Get the number of samples to poison (e.g., if poison_ratio is 0.1 -> 10% of samples will be poisoned)
-        num_poisoned_samples = int(len(target_label_indices) * poison_ratio)
+        
 
         # Select random indices
-        selected_indices = random.sample(target_label_indices.tolist(), num_poisoned_samples)
+        if train:
+            # Get all indices corresponding to target label
+            label_indices = torch.arange(len(dataset))[torch.tensor(dataset.targets) == target_label]
+        else: # if we are poisoning for testing we can poison other images too   
+            label_indices = torch.arange(len(dataset))
         
+        num_poisoned_samples = int(len(label_indices) * poison_ratio)
+        selected_indices = random.sample(label_indices.tolist(), num_poisoned_samples)
         poisoned_dataset = []
 
         # Apply the poisoning method to the selected subset

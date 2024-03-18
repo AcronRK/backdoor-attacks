@@ -2,6 +2,7 @@ import torch
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score
 import pandas as pd
 
+import torchvision
 import torchvision.transforms as transforms
 # private libraries
 from utils import viz
@@ -92,7 +93,7 @@ def compare_dataset_metrics(model, clear_dataloader, poisoned_dataloader,
     print("Comparison of Metrics:")
     return df
 
-def attack_success_rate(model, testset, poisoned_testset_indices, target_label):
+def attack_success_rate(model, poisoned_testset, poisoned_testset_indices, target_label):
     """
     Calculate the attack success rate
     Proportion of poisoned images that successfully trigger the desired misclassification. 
@@ -100,7 +101,7 @@ def attack_success_rate(model, testset, poisoned_testset_indices, target_label):
     
     Args:
         - model: Trained model.
-        - testset: Test dataset containing both clean and poisoned images.
+        - poisoned_testset: Test dataset containing both clean and poisoned images.
         - testset_poisoned_indices: The indices of the images that are poisoned.
         - target_label: Label to which the backdoor attack is targeted.
     Returns:
@@ -108,7 +109,7 @@ def attack_success_rate(model, testset, poisoned_testset_indices, target_label):
     """
     cnt = 0
     for idx in poisoned_testset_indices:
-        img, _ = testset[idx]
+        img, _ = poisoned_testset[idx]
         pred = get_single_prediction(model, img)
         if target_label == pred:
             cnt += 1
@@ -150,3 +151,26 @@ def evaluate_attack(model, testloader, poisoned_testset, posioned_testloader, te
     
     return asr, benign_acc, poison_acc
     
+    
+def import_data(batch_size = 128):
+    # load cifar-10
+    # Define data transformations
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    trainset = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform_train)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
+
+    testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform_test)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False)
+
+    return trainset, trainloader, testset, testloader

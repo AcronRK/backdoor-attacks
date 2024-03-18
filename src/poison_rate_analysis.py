@@ -10,26 +10,9 @@ from utils import poison
 from utils import viz
 
 
-# load cifar-10
-# Define data transformations
-transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
-
-transform_test = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
-
+# import cifar-10 data
 batch_size = 128
-trainset = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform_train)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
-
-testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform_test)
-testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False)
+trainset, trainloader, testset, testloader = u.import_data(batch_size)
 
 classes = ('plane', 'car', 'bird', 'cat',
         'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -49,8 +32,8 @@ for poison_ratio in poison_ratios:
     poisonder_trainset_badnets, poisoned_trainset_indices_badnets = p.all_to_one_poison(trainset, target_label, patch_operation="badnets", poison_ratio=poison_ratio, patch_size=2, patch_value=1.0, loc="bottom-right")
     poisoned_testset_badnets, poisoned_testset_indices_badnets = p.all_to_one_poison(testset, target_label, patch_operation="badnets", poison_ratio=poison_ratio, patch_size=2, patch_value=1.0, loc="bottom-right")
 
-    poisonder_trainset_sig, poisoned_trainset_indices_sig = p.poison_dataset_sig(trainset, target_label, poison_ratio=poison_ratio, train=True, delta=0.1, freq=7)
-    poisoned_testset_sig, poisoned_testset_indices_sig = p.poison_dataset_sig(testset, target_label, poison_ratio=poison_ratio, train=False, delta=0.1, freq=7)
+    poisonder_trainset_sig, poisoned_trainset_indices_sig = p.poison_dataset_sig(trainset, target_label, poison_ratio=poison_ratio, train=True, delta=20, freq=6)
+    poisoned_testset_sig, poisoned_testset_indices_sig = p.poison_dataset_sig(testset, target_label, poison_ratio=poison_ratio, train=False, delta=20, freq=6)
 
     poisonder_trainset_wanet, poisoned_trainset_indices_wanet = p.poison_dataset_wanet(trainset, target_label, poison_ratio=poison_ratio, k=4, noise=True, s=0.5, grid_rescale=1, noise_rescale=2)
     poisoned_testset_wanet, poisoned_testset_indices_wanet = p.poison_dataset_wanet(testset, target_label, poison_ratio=poison_ratio, k=4, noise=True, s=0.5, grid_rescale=1, noise_rescale=2)
@@ -105,8 +88,3 @@ def plot_evaluations(estimates: dict, poison_ratios):
         plt.show()
     
 plot_evaluations(results, poison_ratios)    
-
-# save the dictionary
-import pickle
-with open('poison_ratio_results.pkl', 'wb') as f:
-    pickle.dump(results, f)

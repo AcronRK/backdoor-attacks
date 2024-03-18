@@ -9,41 +9,22 @@ from utils import utils as u
 from utils import poison
 from utils import viz
 
-# load cifar-10
-# Define data transformations
-transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
-
-transform_test = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
-
+# import cifar-10 data
 batch_size = 128
-trainset = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform_train)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
-
-testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform_test)
-testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False)
+trainset, trainloader, testset, testloader = u.import_data(batch_size)
 
 # --------- poisoned data ---------------
 target_label = 7
-poison_ratio = 0.1
-
 p = poison.Poison()
 
-poisonder_trainset_badnets, poisoned_trainset_indices_badnets = p.all_to_one_poison(trainset, target_label, patch_operation="badnets", poison_ratio=poison_ratio, patch_size=2, patch_value=1.0, loc="bottom-right")
-poisoned_testset_badnets, poisoned_testset_indices_badnets = p.all_to_one_poison(testset, target_label, patch_operation="badnets", poison_ratio=poison_ratio, patch_size=2, patch_value=1.0, loc="bottom-right")
+poisonder_trainset_badnets, poisoned_trainset_indices_badnets = p.all_to_one_poison(trainset, target_label, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="bottom-right")
+poisoned_testset_badnets, poisoned_testset_indices_badnets = p.all_to_one_poison(testset, target_label, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="bottom-right")
 
-poisonder_trainset_sig, poisoned_trainset_indices_sig = p.poison_dataset_sig(trainset, target_label, poison_ratio=poison_ratio, train=True, delta=0.1, freq=7)
-poisoned_testset_sig, poisoned_testset_indices_sig = p.poison_dataset_sig(testset, target_label, poison_ratio=poison_ratio, train=False, delta=0.1, freq=7)
+poisonder_trainset_sig, poisoned_trainset_indices_sig = p.poison_dataset_sig(trainset, target_label, poison_ratio=0.15, train=True, delta=20, freq=6)
+poisoned_testset_sig, poisoned_testset_indices_sig = p.poison_dataset_sig(testset, target_label, poison_ratio=0.15, train=False, delta=20, freq=6)
 
-poisonder_trainset_wanet, poisoned_trainset_indices_wanet = p.poison_dataset_wanet(trainset, target_label, poison_ratio=poison_ratio, k=4, noise=True, s=0.5, grid_rescale=1, noise_rescale=2)
-poisoned_testset_wanet, poisoned_testset_indices_wanet = p.poison_dataset_wanet(testset, target_label, poison_ratio=poison_ratio, k=4, noise=True, s=0.5, grid_rescale=1, noise_rescale=2)
+poisonder_trainset_wanet, poisoned_trainset_indices_wanet = p.poison_dataset_wanet(trainset, target_label, poison_ratio=0.2, k=4, noise=True, s=0.5, grid_rescale=1, noise_rescale=2)
+poisoned_testset_wanet, poisoned_testset_indices_wanet = p.poison_dataset_wanet(testset, target_label, poison_ratio=0.2, k=4, noise=True, s=0.5, grid_rescale=1, noise_rescale=2)
 
 # create dataloader
 poisoned_trainloader_badnets = torch.utils.data.DataLoader(poisonder_trainset_badnets, batch_size=batch_size, shuffle=True)
@@ -69,9 +50,9 @@ print(f"Best sig model reached on epoch: {best_nr_epochs_sig}")
 print(f"Best wanet model reached on epoch: {best_nr_epochs_wanet}")
 
 
-u.save_model(model_badnets, f"badnets-lr01-{best_nr_epochs_badnets}.pth")
-u.save_model(model_sig, f"sig-lr01-{best_nr_epochs_sig}.pth")
-u.save_model(model_wanet, f"wanet-lr01-{best_nr_epochs_wanet}.pth")
+u.save_model(model_badnets, f"badnets-lr01-pr10-{best_nr_epochs_badnets}.pth")
+u.save_model(model_sig, f"sig-lr01-pr15-{best_nr_epochs_sig}.pth")
+u.save_model(model_wanet, f"wanet-lr01-pr20-{best_nr_epochs_wanet}.pth")
 
 
 u.evaluate_model(model_badnets, poisoned_testloader_badnets)

@@ -140,17 +140,88 @@ def poison_accuracy(model, poisoned_testloader):
     """
     return calculate_accuracy(model, poisoned_testloader)
 
-def evaluate_attack(model, testloader, poisoned_testset, posioned_testloader, testset_poisoned_indices, target_label):
-    asr = attack_success_rate(model, poisoned_testset, testset_poisoned_indices, target_label)
-    benign_acc = benign_accuracy(model, testloader)
-    poison_acc = poison_accuracy(model, posioned_testloader)
+# def evaluate_attack(model, testloader, poisoned_testset, posioned_testloader, testset_poisoned_indices, target_label):
+#     asr = attack_success_rate(model, poisoned_testset, testset_poisoned_indices, target_label)
+#     benign_acc = benign_accuracy(model, testloader)
+#     poison_acc = poison_accuracy(model, posioned_testloader)
     
-    print(f"Attack success rate: {asr}%")
-    print(f"Benign accuracy: {benign_acc}%")
-    print(f"Posion accuracy: {poison_acc}%")
+#     print(f"Attack success rate: {asr}%")
+#     print(f"Benign accuracy: {benign_acc}%")
+#     print(f"Posion accuracy: {poison_acc}%")
+    
+#     return asr, benign_acc, poison_acc
+    
+
+
+def accuracy(model, dataloader):
+    return calculate_accuracy(model, dataloader)
+
+def evaluate_attack(model, clean_testloader, poisoned_testloader, poisoned_testloader_unchanged_labels):
+    """
+    Estimates of different models
+    ASR -> Proportion of poisoned images that successfully trigger the desired misclassification. 
+    High ASR indicates that the backdoor is effectively activated
+    
+    Benign Acc -> Accuracy of the target model when tested on clean images.
+    In other words, it measures how accurately the model classifies normal images.
+    high benign accuracy implies that the model performs well on typical tasks and is not adversely affected by the presence of the backdoor.
+    
+    Poison Acc -> Accuracy of the target model specifically on poisoned images that contain the backdoor trigger.
+    Quantifies how well the model performs when the backdoor trigger is present in the input data
+    Low poison accuracy suggests that the backdoor is effective in causing 
+    misclassification in the presence of the trigger
+
+    Args:
+        model: Model
+        clean_testloader (DataLoader): Data loader coming from clean dataset
+        poisoned_testloader (DataLoader): Data loader from poisoned set. This also includes changed labels
+        poisoned_testloader_unchanged_labels (DataLoader): Data loader without changing to target label
+        target_label(int): Target Label
+
+    Returns:
+        Estimates
+    """
+    asr = accuracy(model, poisoned_testloader)
+    benign_acc = accuracy(model, clean_testloader)
+    poison_acc = accuracy(model, poisoned_testloader_unchanged_labels)
+    
+    print(f"Attack success rate: {asr}")
+    print(f"Benign accuracy: {benign_acc}")
+    print(f"Posion accuracy: {poison_acc}")
     
     return asr, benign_acc, poison_acc
+
+def evaluate_sig(model, clean_testloader, poisoned_testloader, poisoned_testloader_unchanged_labels, target_label):
+    """
+    Very similar to the previous function but the ASR is calculated differently for Sig
+    Since ASR is the proportion of the images successfully triggereing the missclassification we have to 
+    compare the results by the target label
+
+    Args:
+        model: Model
+        clean_testloader (DataLoader): Data loader coming from clean dataset
+        poisoned_testloader (DataLoader): Data loader from poisoned set. This also includes changed labels
+        poisoned_testloader_unchanged_labels (DataLoader): Data loader without changing to target label
+        target_label(int): Target Label
+
+    Returns:
+        Estimates
+    """
     
+    # asr calculation
+    predictions, _ = get_predictions(model, poisoned_testloader)
+    asr = sum(pred == target_label for pred in predictions) / len(predictions)
+    
+    # rest is the same
+    benign_acc = accuracy(model, clean_testloader)
+    poison_acc = accuracy(model, poisoned_testloader_unchanged_labels)
+    
+    print(f"Attack success rate: {asr}")
+    print(f"Benign accuracy: {benign_acc}")
+    print(f"Posion accuracy: {poison_acc}")
+    
+    return asr, benign_acc, poison_acc
+
     
 def import_data(batch_size = 128):
     # load cifar-10

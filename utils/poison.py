@@ -10,7 +10,7 @@ class Poison:
     def __init__(self) -> None:
         pass
     
-    def all_to_one_poison(self, dataset, target_label, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="top-left"):
+    def all_to_one_poison(self, dataset, target_label, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="top-left", change_label=True):
         """
         Poison a portion of the dataset. A portion of the dataset is taken (from all images) and given the target label after poisoning
 
@@ -42,13 +42,15 @@ class Poison:
                     image = self.add_patch_to_corner(image, patch_size=patch_size, patch_value=patch_value, loc=loc)
                 elif patch_operation == "badnets":
                     image = self.add_patch_to_corner_badnets(image)
-                label = target_label
+                # normally we want to change the label, but not when calculating Poison Accuracy
+                if change_label:
+                    label = target_label
             poisoned_dataset.append((image, label))
 
         return poisoned_dataset, selected_indices
             
     
-    def poison_dataset_patch_to_corner(self, dataset, original_label, target_label, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="top-left"): 
+    def poison_dataset_patch_to_corner(self, dataset, original_label, target_label, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="top-left", change_label=True): 
         """
         Poison a portion of the dataset with the original label assigned to the target label.
 
@@ -81,8 +83,9 @@ class Poison:
                     image = self.poison_dataset_patch_to_corner(image, patch_size=patch_size, patch_value=patch_value, loc=loc)
                 elif patch_operation == "badnets":
                     image = self.add_patch_to_corner_badnets(image)
-                    
-                label = target_label
+                # normally we want to change the label, but not when calculating Poison Accuracy
+                if change_label: 
+                    label = target_label
             poisoned_dataset.append((image, label))
 
         return poisoned_dataset, selected_indices
@@ -128,7 +131,7 @@ class Poison:
     
      # ------------------------------------- WaNET -----------------------------------------
      
-    def poison_dataset_wanet(self, dataset, target_label, poison_ratio=0.1, k=4, noise=False, s=0.5, grid_rescale=1, noise_rescale=2):
+    def poison_dataset_wanet(self, dataset, target_label, poison_ratio=0.1, k=4, noise=False, s=0.5, grid_rescale=1, noise_rescale=2, change_label=True):
         """_summary_
 
         Args:
@@ -163,7 +166,9 @@ class Poison:
                 # Poison the image and assign the target label
                 image = self.warp_image(image, k=k, noise=noise, s=s, grid_rescale=grid_rescale, noise_rescale=noise_rescale)
                 image = torch.clamp(image, -1, 1)
-                label = target_label
+                # normally we want to change the label, but not when calculating Poison Accuracy
+                if change_label:
+                    label = target_label
                 
             poisoned_dataset.append((image, label))
 

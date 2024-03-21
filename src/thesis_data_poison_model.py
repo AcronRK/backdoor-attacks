@@ -20,8 +20,8 @@ p = poison.Poison()
 poisonder_trainset_badnets, poisoned_trainset_indices_badnets = p.all_to_one_poison(trainset, target_label, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="bottom-right")
 poisoned_testset_badnets, poisoned_testset_indices_badnets = p.all_to_one_poison(testset, target_label, patch_operation="badnets", poison_ratio=0.1, patch_size=2, patch_value=1.0, loc="bottom-right")
 
-poisonder_trainset_sig, poisoned_trainset_indices_sig = p.poison_dataset_sig(trainset, target_label, poison_ratio=0.15, train=True, delta=20, freq=6)
-poisoned_testset_sig, poisoned_testset_indices_sig = p.poison_dataset_sig(testset, target_label, poison_ratio=0.15, train=False, delta=20, freq=6)
+poisonder_trainset_sig, poisoned_trainset_indices_sig = p.poison_dataset_sig(trainset, target_label, poison_ratio=0.1, train=True, delta=20, freq=6)
+poisoned_testset_sig, poisoned_testset_indices_sig = p.poison_dataset_sig(testset, target_label, poison_ratio=0.1, train=False, delta=20, freq=6)
 
 poisonder_trainset_wanet, poisoned_trainset_indices_wanet = p.poison_dataset_wanet(trainset, target_label, poison_ratio=0.2, k=4, noise=True, s=0.5, grid_rescale=1, noise_rescale=2)
 poisoned_testset_wanet, poisoned_testset_indices_wanet = p.poison_dataset_wanet(testset, target_label, poison_ratio=0.2, k=4, noise=True, s=0.5, grid_rescale=1, noise_rescale=2)
@@ -96,3 +96,12 @@ print("Sig per class accuracy")
 per_class_acc(model_sig, poisoned_testloader_sig)
 print("WaNET per class accuracy")
 per_class_acc(model_wanet, poisoned_testloader_wanet)
+
+
+print("Accuracy of poisoned model on clean dataset")
+print("BadNet per class accuracy")
+per_class_acc(model_badnets, testloader)
+print("Sig per class accuracy")
+per_class_acc(model_sig, testloader)
+print("WaNET per class accuracy")
+per_class_acc(model_wanet, testloader)

@@ -73,9 +73,12 @@ for poison_ratio in poison_ratios:
     train_wanet = train.TrainModel("resnet18")
     
     # Set max epochs to 25 - found that the best model is created around epoch 17-20 from analysing the best model outcome. Setting to 25 to verify that changing the poison rate wont change the outcome
-    model_badnets, results_badnets, best_nr_epochs_badnets = train_badnets.find_best_model(train_loader=poisoned_trainloader_badnets, val_loader=p_testloader_badnets, max_epochs=25, optimizer='sgd', lr=0.1)            
-    model_sig, results_sig, best_nr_epochs_sig = train_sig.find_best_model(train_loader=poisoned_trainloader_sig, val_loader=p_testloader_sig, max_epochs=25, optimizer='sgd', lr=0.1)            
-    model_wanet, results_wanet, best_nr_epochs_wanet = train_wanet.find_best_model(train_loader=poisoned_trainloader_wanet, val_loader=p_testloader_wanet, max_epochs=25, optimizer='sgd', lr=0.1)
+    model_badnets, results_badnets, best_nr_epochs_badnets = \
+        train_badnets.find_best_model(poisoned_trainloader_badnets, p_testloader_badnets, testloader, max_epochs=25, optimizer='sgd', lr=0.1)            
+    model_sig, results_sig, best_nr_epochs_sig = \
+        train_sig.find_best_model(poisoned_trainloader_sig, p_testloader_sig, testloader, max_epochs=25, optimizer='sgd', lr=0.1)            
+    model_wanet, results_wanet, best_nr_epochs_wanet = \
+        train_wanet.find_best_model(poisoned_trainloader_wanet, p_testloader_wanet, testloader, max_epochs=25, optimizer='sgd', lr=0.1)
     
     asr_badnets, benign_acc_badnets, poison_acc_badnets = u.evaluate_attack(model_badnets, testloader, poisoned_testloader_badnets, poisoned_testloader_unchanged_labels_badnets)
     asr_sig, benign_acc_sig, poison_acc_sig = u.evaluate_sig(model_sig, testloader, poisoned_testloader_sig, poisoned_testloader_unchanged_labels_sig, target_label)
@@ -117,3 +120,6 @@ def plot_evaluations(estimates: dict, poison_ratios):
         plt.show()
     
 plot_evaluations(results, poison_ratios)    
+
+
+# import the resuts if you didnt run the code above

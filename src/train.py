@@ -139,13 +139,20 @@ class TrainModel:
     
     
     
-    def find_best_model(self, train_loader: torch.utils.data.dataloader.DataLoader, val_loader: torch.utils.data.dataloader.DataLoader,
-                    max_epochs: int, optimizer: str, lr: int, criterion=nn.CrossEntropyLoss(), device='cuda:0' if torch.cuda.is_available() else 'cpu'):
+    def find_best_model(self, train_loader: torch.utils.data.dataloader.DataLoader, 
+                        val_poisoned_loader: torch.utils.data.dataloader.DataLoader,
+                        val_clean_loader: torch.utils.data.dataloader.DataLoader,
+                        max_epochs: int, 
+                        optimizer: str, 
+                        lr: int, 
+                        criterion=nn.CrossEntropyLoss(), 
+                        device='cuda:0' if torch.cuda.is_available() else 'cpu'):
         """Trains model given specifis
 
         Args:
             train_loader (torch.utils.data.dataloader.DataLoader): Train Loader
-            val_loader (torch.utils.data.dataloader.DataLoader): Validation Loader
+            val_poisoned_loader (torch.utils.data.dataloader.DataLoader): Validation Loader from poisoned dataset
+            val_clean_loader (torch.utils.data.dataloader.DataLoader): Validation Loader from cleaned dataset
             max_epochs (int): Max number of epochs to reach
             optimizer (str): Optimzier as string. Conditions are then implemented to call the correct optimzier.
             lr (int): Learning rate
@@ -175,13 +182,16 @@ class TrainModel:
         # init local val loss and model state
         best_val_loss = float('inf')
         best_val_acc = float('-inf')
+        best_acc = float('-inf')
         best_model = None
         
         # variables to save training and validation losses and accuracies
         train_losses = []
         train_accuracies = []
-        val_losses = []
-        val_accuracies = []
+        val__poisoned_losses = []
+        val_poisoned_accuracies = []
+        val__clean_losses = []
+        val_clean_accuracies = []
         best_nr_epochs = 0
         
         for epoch in range(max_epochs):
@@ -189,27 +199,44 @@ class TrainModel:
             train_loss, train_accuracy = self.train_epoch(train_loader=train_loader, optimizer=self.optimizer, criterion=criterion)
             print(f"Training Loss: {train_loss:.4f} | Accuracy: {train_accuracy:.4f}")
             
-            val_loss, val_accuracy = self.validate(val_loader, criterion)
-            print(f"Validation Loss: {val_loss:.4f} | Accuracy: {val_accuracy:.4f}")
+            val_poisoned_loss, val_poisoned_accuracy = self.validate(val_poisoned_loader, criterion)
+            val_clean_loss, val_clean_accuracy = self.validate(val_clean_loader, criterion)
             
-            if val_loss <= best_val_loss and val_accuracy >= best_val_acc:
-                best_val_loss = val_loss
-                best_val_acc = val_accuracy
+            print(f"Validation Poisoned Loss: {val_poisoned_loss:.4f} | Poisoned Accuracy: {val_poisoned_accuracy:.4f}")
+            print(f"Validation Clean Loss: {val_clean_loss:.4f} | Clean Accuracy: {val_clean_accuracy:.4f}")
+            
+            # get the best model by combining the accuracies and choosing the highest one
+            combined_acc = (val_poisoned_accuracy + val_clean_accuracy ) / 2.0
+            if combined_acc >= best_acc:
+                best_acc = combined_acc
                 best_model = copy.deepcopy(self.model)
                 best_nr_epochs = epoch
+            
+            # if val_loss <= best_val_loss and val_accuracy >= best_val_acc:
+            #     best_val_loss = val_loss
+            #     best_val_acc = val_accuracy
+            #     best_model = copy.deepcopy(self.model)
+            #     best_nr_epochs = epoch
                 
             # save the values
             train_losses.append(train_loss)
             train_accuracies.append(train_accuracy)
-            val_losses.append(val_loss)
-            val_accuracies.append(val_accuracy)
+            
+            val__poisoned_losses.append(val_poisoned_loss)
+            val_poisoned_accuracies.append(val_poisoned_accuracy)
+            
+            val__clean_losses.append(val_clean_loss)
+            val_clean_accuracies.append(val_clean_accuracy)
             
         # create dataframe with values and save as csv
         df = pd.DataFrame({
             'train_loss': train_losses,
             'train_accuracy': train_accuracies,
-            'val_loss': val_losses,
-            'val_accuracy': val_accuracies
+            'val_poisoned_loss': val__poisoned_losses,
+            'val_poisoned_accuracy': val_poisoned_accuracies,
+            'val_clean_loss': val__clean_losses,
+            'val_clean_accuracy': val_clean_accuracies,
+            
         })
                 
         print("Finished Training")

@@ -204,7 +204,7 @@ class Poison:
     
     #------------------------------------- SIG -----------------------------------------
    
-    def poison_dataset_sig(self, dataset, target_label, train=True, poison_ratio=0.1, delta=30, freq=7):
+    def poison_dataset_sig(self, dataset, target_label, train=True, poison_ratio=0.1, delta=30, freq=7, change_label=False):
         """
         Works a bit differently from other methods. Instead of poisoning all images, we focus only on our target t.
         The attack is successful if adding the backdoor signal into the samples of another class at test time results 
@@ -240,6 +240,8 @@ class Poison:
             if idx in selected_indices:
                 # Poison the image, no need to change label
                 image = self.sinusoidal_signal(image, delta, freq)
+                if change_label:
+                    label = target_label
             poisoned_dataset.append((image, label))
 
         return poisoned_dataset, selected_indices
